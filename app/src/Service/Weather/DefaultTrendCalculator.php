@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);wq
 
 namespace App\Service\Weather;
 
