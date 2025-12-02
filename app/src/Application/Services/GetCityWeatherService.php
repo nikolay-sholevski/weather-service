@@ -6,10 +6,8 @@ namespace App\Application\Services;
 
 use App\Application\Ports\CurrentWeatherProviderInterface;
 use App\Application\Ports\WeatherHistoryPortInterface;
-use App\Domain\Entities\WeatherMeasurement;
 use App\Domain\Services\TrendCalculatorInterface;
 use App\Domain\ValueObjects\City;
-use App\Domain\ValueObjects\Temperature;
 use App\Domain\ValueObjects\WeatherSummary;
 
 /**
@@ -19,8 +17,8 @@ use App\Domain\ValueObjects\WeatherSummary;
  * - Normalize the input city name into a City value object.
  * - Obtain current temperature via outbound HTTP port.
  * - Obtain historical measurements via outbound history port.
- * - Delegate trend calculation to a domain service.
- * - Optionally compute the historical average for inclusion in the summary.
+ * - Delegate analysis (average + trend) entirely to a domain service.
+ * - Build a WeatherSummary from the domain analysis result.
  */
 final class GetCityWeatherService implements GetCityWeatherServiceInterface
 {
@@ -41,45 +39,15 @@ final class GetCityWeatherService implements GetCityWeatherServiceInterface
         $historicalMeasurements = $this->weatherHistoryPort
             ->findMeasurementsForLastNDays($city, 10);
 
-        $trend = $this->trendCalculator
-            ->calculateTrend($currentTemperature, $historicalMeasurements);
-
-        $average = $this->computeAverageOrNull($historicalMeasurements);
+        $analysis = $this->trendCalculator
+            ->analyze($currentTemperature, $historicalMeasurements);
 
         return new WeatherSummary(
             $city,
             $currentTemperature,
-            $average,
-            $trend
+            $analysis->averageTemperature(),
+            $analysis->trend()
         );
-    }
-
-    /**
-     * @param WeatherMeasurement[] $measurements
-     */
-    private function computeAverageOrNull(array $measurements): ?Temperature
-    {
-        if ($measurements === []) {
-            return null;
-        }
-
-        $sum = 0.0;
-        $count = 0;
-
-        foreach ($measurements as $measurement) {
-            if (!$measurement instanceof WeatherMeasurement) {
-                throw new \InvalidArgumentException('Expected array of WeatherMeasurement instances.');
-            }
-
-            $sum += $measurement->temperature()->value();
-            $count++;
-        }
-
-        if ($count === 0) {
-            return null;
-        }
-
-        return new Temperature($sum / $count);
     }
 }
 
