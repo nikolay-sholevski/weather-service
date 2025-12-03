@@ -19,7 +19,6 @@ use Symfony\Component\Console\Output\OutputInterface;
     name: 'app:weather:import-measurement',
     description: 'Imports current weather measurements for one or more cities',
 )]
-#[AsPeriodicTask('5 minutes', schedule: 'default')]
 class ImportWeatherMeasurementsCommand extends Command
 {
     public function __construct(
@@ -43,12 +42,6 @@ class ImportWeatherMeasurementsCommand extends Command
     {
         /** @var string[] $cityNames */
         $cityNames = $input->getArgument('city');
-
-        if (!\is_array($cityNames) || $cityNames === []) {
-            $output->writeln('<error>No cities provided</error>');
-
-            return Command::INVALID;
-        }
 
         foreach ($cityNames as $cityName) {
             try {
