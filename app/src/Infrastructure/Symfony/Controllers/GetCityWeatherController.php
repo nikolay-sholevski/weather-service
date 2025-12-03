@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Symfony\Controllers;
 
 use App\Application\Services\GetCityWeatherServiceInterface;
+use App\Application\DTO\WeatherSummaryDto;
 use App\Infrastructure\Symfony\Request\GetCityWeatherRequest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -49,19 +50,10 @@ final class GetCityWeatherController
         // At this point, $dto->city is non-null and valid
         $summary = $this->getCityWeatherService->getSummaryForCity($dto->city);
 
-        $data = [
-            'city'    => (string) $summary->city(),
-            'current' => $summary->currentTemperature()->value(),
-            'average' => $summary->hasAverage()
-                ? $summary->averageTemperature()?->value()
-                : null,
-            'trend' => [
-                'direction' => $summary->trend()->direction(),
-                'delta'     => $summary->trend()->deltaInCelsius(),
-                'label'     => $summary->trend()->label(),
-            ],
-        ];
-
+        // Map domain WeatherSummary -> DTO -> array for JSON
+        $summaryDto = WeatherSummaryDto::fromDomain($summary);
+        $data = $summaryDto->toArray();
+        
         return new JsonResponse($data);
     }
 }
