@@ -75,6 +75,8 @@
         }
     },
     "require-dev": {
+        "behat/behat": "^3.27",
+        "friends-of-behat/symfony-extension": "^2.6",
         "laravel/pint": "^1.25",
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^11.5",
