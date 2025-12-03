@@ -12,7 +12,7 @@ namespace App\Domain\ValueObjects;
 final class Temperature
 {
     public function __construct(
-        private readonly float $valueInCelsius
+        private readonly float $valueInCelsius,
     ) {
         if (\is_nan($valueInCelsius) || \is_infinite($valueInCelsius)) {
             throw new \InvalidArgumentException('Temperature must be a finite numeric value.');
@@ -49,4 +49,3 @@ final class Temperature
         return \sprintf('%.1f°C', $this->valueInCelsius);
     }
 }
-

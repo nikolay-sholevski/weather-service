@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Symfony\Controllers;
 
-use App\Application\Services\GetCityWeatherServiceInterface;
 use App\Application\DTO\WeatherSummaryDto;
+use App\Application\Services\GetCityWeatherServiceInterface;
 use App\Infrastructure\Symfony\Request\GetCityWeatherRequest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -43,7 +43,7 @@ final class GetCityWeatherController
                     'message' => 'Invalid request data.',
                     'errors'  => $errors,
                 ],
-                JsonResponse::HTTP_BAD_REQUEST
+                JsonResponse::HTTP_BAD_REQUEST,
             );
         }
 
@@ -53,8 +53,7 @@ final class GetCityWeatherController
         // Map domain WeatherSummary -> DTO -> array for JSON
         $summaryDto = WeatherSummaryDto::fromDomain($summary);
         $data = $summaryDto->toArray();
-        
+
         return new JsonResponse($data);
     }
 }
-

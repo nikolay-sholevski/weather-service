@@ -16,7 +16,8 @@ final class Version20250201SeedInitialWeatherData extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql(<<<'SQL'
+        $this->addSql(
+            <<<'SQL'
 INSERT INTO weather_measurements (city_name, temperature_celsius, measured_at) VALUES
 ('Sofia', 10.5, NOW() - INTERVAL '1 day'),
 ('Sofia', 12.2, NOW() - INTERVAL '2 days'),
@@ -32,4 +33,3 @@ SQL
         $this->addSql("DELETE FROM weather_measurements WHERE city_name = 'Sofia'");
     }
 }
-

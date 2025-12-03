@@ -26,4 +26,3 @@ interface WeatherHistoryPortInterface
 
     public function saveMeasurement(WeatherMeasurement $measurement): void;
 }
-

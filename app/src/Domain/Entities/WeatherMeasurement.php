@@ -24,7 +24,7 @@ final class WeatherMeasurement
         private readonly ?int $id,
         private readonly City $city,
         private readonly Temperature $temperature,
-        private readonly MeasurementTime $measurementTime
+        private readonly MeasurementTime $measurementTime,
     ) {
     }
 
@@ -63,4 +63,3 @@ final class WeatherMeasurement
         return $this->measurementTime->isAfter($other->measurementTime);
     }
 }
-

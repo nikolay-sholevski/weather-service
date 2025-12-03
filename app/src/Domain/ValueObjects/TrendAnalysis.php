@@ -15,7 +15,7 @@ final class TrendAnalysis
 {
     public function __construct(
         private readonly Trend $trend,
-        private readonly ?Temperature $averageTemperature
+        private readonly ?Temperature $averageTemperature,
     ) {
     }
 
@@ -34,4 +34,3 @@ final class TrendAnalysis
         return $this->averageTemperature !== null;
     }
 }
-

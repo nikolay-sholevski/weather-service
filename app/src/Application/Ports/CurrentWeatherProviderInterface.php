@@ -15,4 +15,3 @@ interface CurrentWeatherProviderInterface
 {
     public function getCurrentTemperature(City $city): Temperature;
 }
-

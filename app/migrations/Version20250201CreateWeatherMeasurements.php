@@ -16,7 +16,8 @@ final class Version20250201CreateWeatherMeasurements extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql(<<<'SQL'
+        $this->addSql(
+            <<<'SQL'
 CREATE TABLE weather_measurements (
     id SERIAL PRIMARY KEY,
     city_name VARCHAR(100) NOT NULL,
@@ -32,4 +33,3 @@ SQL
         $this->addSql('DROP TABLE IF EXISTS weather_measurements');
     }
 }
-

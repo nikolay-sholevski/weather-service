@@ -15,7 +15,7 @@ final class WeatherSummary
         private readonly City $city,
         private readonly Temperature $currentTemperature,
         private readonly ?Temperature $averageTemperature,
-        private readonly Trend $trend
+        private readonly Trend $trend,
     ) {
     }
 
@@ -49,4 +49,3 @@ final class WeatherSummary
         return $this->trend->isStable();
     }
 }
-

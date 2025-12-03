@@ -18,7 +18,7 @@ final class Trend
 
     public function __construct(
         private readonly string $direction,
-        private readonly float $deltaInCelsius
+        private readonly float $deltaInCelsius,
     ) {
         if (!\in_array($direction, [
             self::DIRECTION_HOTTER,
@@ -75,7 +75,7 @@ final class Trend
         return \sprintf(
             '%s by %.1f°C',
             $this->isHotter() ? 'hotter' : 'colder',
-            \abs($this->deltaInCelsius)
+            \abs($this->deltaInCelsius),
         );
     }
 
@@ -84,4 +84,3 @@ final class Trend
         return $this->label();
     }
 }
-

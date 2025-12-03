@@ -14,6 +14,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 final class ApiContext implements Context
 {
     private KernelBrowser $client;
+
     private ?Response $response = null;
 
     public function __construct(KernelInterface $kernel)
@@ -68,7 +69,7 @@ final class ApiContext implements Context
         foreach ($expected as $key => $value) {
             Assert::assertArrayHasKey($key, $actual, \sprintf(
                 'Expected JSON key "%s" not found in response',
-                $key
+                $key,
             ));
 
             if (\is_array($value)) {
@@ -94,7 +95,7 @@ final class ApiContext implements Context
         Assert::assertEquals(
             $expected,
             $actual,
-            'JSON response does not match expected structure'
+            'JSON response does not match expected structure',
         );
     }
 
@@ -110,12 +111,12 @@ final class ApiContext implements Context
         foreach ($parts as $part) {
             Assert::assertIsArray(
                 $data,
-                'Current JSON node is not an array while looking for ' . $path
+                'Current JSON node is not an array while looking for ' . $path,
             );
             Assert::assertArrayHasKey(
                 $part,
                 $data,
-                sprintf('Key "%s" not found in JSON path "%s"', $part, $path)
+                sprintf('Key "%s" not found in JSON path "%s"', $part, $path),
             );
 
             /** @var mixed $data */
@@ -152,7 +153,7 @@ final class ApiContext implements Context
 
         Assert::assertTrue(
             \is_int($value) || \is_float($value),
-            sprintf('Field "%s" is not numeric (got: %s)', $path, gettype($value))
+            sprintf('Field "%s" is not numeric (got: %s)', $path, gettype($value)),
         );
     }
 
@@ -170,8 +171,7 @@ final class ApiContext implements Context
 
         Assert::assertIsString(
             $value,
-            sprintf('Field "%s" is not a string (got: %s)', $path, gettype($value))
+            sprintf('Field "%s" is not a string (got: %s)', $path, gettype($value)),
         );
     }
 }
-

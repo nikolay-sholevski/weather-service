@@ -20,7 +20,7 @@ use App\Domain\ValueObjects\TrendAnalysis;
 final class SimpleTrendCalculator implements TrendCalculatorInterface
 {
     public function __construct(
-        private readonly float $stableThresholdCelsius = 0.3
+        private readonly float $stableThresholdCelsius = 0.3,
     ) {
         if ($stableThresholdCelsius < 0.0) {
             throw new \InvalidArgumentException('Stable threshold cannot be negative.');
@@ -32,7 +32,7 @@ final class SimpleTrendCalculator implements TrendCalculatorInterface
      */
     public function analyze(
         Temperature $currentTemperature,
-        array $historicalMeasurements
+        array $historicalMeasurements,
     ): TrendAnalysis {
         if ($historicalMeasurements === []) {
             $trend = new Trend(Trend::DIRECTION_STABLE, 0.0);
@@ -68,4 +68,3 @@ final class SimpleTrendCalculator implements TrendCalculatorInterface
         return new TrendAnalysis($trend, $average);
     }
 }
-

@@ -20,7 +20,6 @@ interface TrendCalculatorInterface
      */
     public function analyze(
         Temperature $currentTemperature,
-        array $historicalMeasurements
+        array $historicalMeasurements,
     ): TrendAnalysis;
 }
-
