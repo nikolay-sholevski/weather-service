@@ -22,7 +22,7 @@ use Doctrine\DBAL\Connection;
 final class WeatherHistoryDoctrineAdapter implements WeatherHistoryPortInterface
 {
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
     ) {
     }
 
@@ -54,7 +54,7 @@ SQL;
                 isset($row['id']) ? (int) $row['id'] : null,
                 new City($row['city_name']),
                 new Temperature((float) $row['temperature_celsius']),
-                MeasurementTime::fromString($row['measured_at'])
+                MeasurementTime::fromString($row['measured_at']),
             );
         }
 
@@ -66,7 +66,7 @@ SQL;
         $city = $measurement->city();                    // City VO
         $temperature = $measurement->temperature();      // Temperature VO
         $time = $measurement->measurementTime();        // MeasurementTime VO
-    
+
         $this->connection->insert('weather_measurements', [
             'city_name'           => \mb_strtolower($city->value()),
             'temperature_celsius' => $temperature->value(),              // or ->toFloat()
@@ -74,4 +74,3 @@ SQL;
         ]);
     }
 }
-

@@ -27,10 +27,10 @@ final class ImportCityWeatherService implements ImportCityWeatherServiceInterfac
         $measurementTime = new MeasurementTime(new \DateTimeImmutable('now'));
 
         $measurement = new WeatherMeasurement(
-            null,      
+            null,
             $city,
             $temperature,
-            $measurementTime
+            $measurementTime,
         );
 
         $this->weatherHistoryPort->saveMeasurement($measurement);
@@ -38,4 +38,3 @@ final class ImportCityWeatherService implements ImportCityWeatherServiceInterfac
         return $measurement;
     }
 }
-

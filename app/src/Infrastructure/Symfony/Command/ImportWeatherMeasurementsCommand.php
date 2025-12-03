@@ -29,7 +29,7 @@ class ImportWeatherMeasurementsCommand extends Command
             ->addArgument(
                 'city',
                 InputArgument::IS_ARRAY | InputArgument::REQUIRED,
-                'City or list of cities (space-separated): Sofia Varna Burgas'
+                'City or list of cities (space-separated): Sofia Varna Burgas',
             );
     }
 
@@ -46,13 +46,13 @@ class ImportWeatherMeasurementsCommand extends Command
                     'Imported measurement for %s: %s at %s',
                     (string) $measurement->city(),
                     (string) $measurement->temperature(),
-                    (string) $measurement->measurementTime()
+                    (string) $measurement->measurementTime(),
                 ));
             } catch (\Throwable $e) {
                 $output->writeln(\sprintf(
                     '<error>Error importing %s: %s</error>',
                     $cityName,
-                    $e->getMessage()
+                    $e->getMessage(),
                 ));
             }
         }
@@ -60,4 +60,3 @@ class ImportWeatherMeasurementsCommand extends Command
         return Command::SUCCESS;
     }
 }
-

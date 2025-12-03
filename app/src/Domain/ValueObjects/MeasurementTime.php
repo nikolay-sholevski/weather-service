@@ -15,7 +15,7 @@ use DateTimeInterface;
 final class MeasurementTime
 {
     public function __construct(
-        private readonly DateTimeImmutable $occurredAt
+        private readonly DateTimeImmutable $occurredAt,
     ) {
     }
 
@@ -49,4 +49,3 @@ final class MeasurementTime
         return $this->occurredAt->format(DateTimeInterface::ATOM);
     }
 }
-

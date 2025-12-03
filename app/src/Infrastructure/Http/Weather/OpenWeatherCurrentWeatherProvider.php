@@ -69,4 +69,3 @@ final class OpenWeatherCurrentWeatherProvider implements CurrentWeatherProviderI
         }
     }
 }
-

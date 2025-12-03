@@ -15,4 +15,3 @@ if (file_exists(dirname(__DIR__) . '/.env.test')) {
 }
 
 // Nothing else to bootstrap — PHPUnit + SymfonyExtension will handle Kernel
-

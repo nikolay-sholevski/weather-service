@@ -13,4 +13,3 @@ interface ImportCityWeatherServiceInterface
      */
     public function importForCity(string $cityName): WeatherMeasurement;
 }
-

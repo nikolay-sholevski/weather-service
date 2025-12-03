@@ -24,7 +24,7 @@ final class CachedGetCityWeatherService implements GetCityWeatherServiceInterfac
     public function __construct(
         private readonly GetCityWeatherServiceInterface $inner,
         private readonly Redis $redis,
-        private readonly int $ttlSeconds = 300 // e.g. 5 minutes
+        private readonly int $ttlSeconds = 300, // e.g. 5 minutes
     ) {
     }
 
@@ -69,10 +69,9 @@ final class CachedGetCityWeatherService implements GetCityWeatherServiceInterfac
         $this->redis->setex(
             $key,
             $this->ttlSeconds,
-            \json_encode($payload, JSON_THROW_ON_ERROR)
+            \json_encode($payload, JSON_THROW_ON_ERROR),
         );
 
         return $summary;
     }
 }
-

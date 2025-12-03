@@ -15,4 +15,3 @@ interface GetCityWeatherServiceInterface
 {
     public function getSummaryForCity(string $cityName): WeatherSummary;
 }
-

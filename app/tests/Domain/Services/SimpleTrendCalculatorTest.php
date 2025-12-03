@@ -109,7 +109,7 @@ final class SimpleTrendCalculatorTest extends TestCase
         ];
 
         // average = (18 + 20 + 22) / 3 = 20.0
-        $current = new Temperature(18.0); 
+        $current = new Temperature(18.0);
 
         $analysis = $calculator->analyze($current, $history);
 
@@ -172,4 +172,3 @@ final class SimpleTrendCalculatorTest extends TestCase
         self::assertFalse($trend->isColder());
     }
 }
-

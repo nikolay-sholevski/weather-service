@@ -46,8 +46,7 @@ final class GetCityWeatherService implements GetCityWeatherServiceInterface
             $city,
             $currentTemperature,
             $analysis->averageTemperature(),
-            $analysis->trend()
+            $analysis->trend(),
         );
     }
 }
-

@@ -54,4 +54,3 @@ final class TrendTest extends TestCase
         self::assertStringContainsString('stable', $label);
     }
 }
-
