@@ -129,6 +129,13 @@ final class ApiContext implements Context
         Assert::assertIsString($value, sprintf('Field "%s" is not a string (got: %s)', $path, gettype($value)));
     }
 
-
+    /**
+     * @When I request the city weather with no parameters
+     */
+    public function iRequestTheCityWeatherWithNoParameters(): void
+    {
+        $this->client->request('GET', '/api/weather'); // без query параметри
+        $this->response = $this->client->getResponse();
+    }
 }
 
