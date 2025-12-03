@@ -4,11 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Symfony\Command;
 
-use App\Application\Ports\CurrentWeatherProviderInterface;
-use App\Application\Ports\WeatherHistoryPortInterface;
-use App\Domain\Entities\WeatherMeasurement;
-use App\Domain\ValueObjects\City;
-use App\Domain\ValueObjects\MeasurementTime;
+use App\Application\Services\ImportCityWeatherServiceInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -22,8 +18,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class ImportWeatherMeasurementsCommand extends Command
 {
     public function __construct(
-        private readonly CurrentWeatherProviderInterface $currentWeatherProvider,
-        private readonly WeatherHistoryPortInterface $weatherHistoryPort,
+        private readonly ImportCityWeatherServiceInterface $importCityWeatherService,
     ) {
         parent::__construct();
     }
@@ -45,27 +40,13 @@ class ImportWeatherMeasurementsCommand extends Command
 
         foreach ($cityNames as $cityName) {
             try {
-                $city = new City($cityName);
-
-                $temperature = $this->currentWeatherProvider->getCurrentTemperature($city);
-
-                $measurementTime = new MeasurementTime(new \DateTimeImmutable('now'));
-
-                $measurement = new WeatherMeasurement(
-                    null,                // id, DB can generate or you ignore it
-                    $city,
-                    $temperature,
-                    $measurementTime
-                );
-
-                // 🔥 This replaces EntityManager->persist/flush
-                $this->weatherHistoryPort->saveMeasurement($measurement);
+                $measurement = $this->importCityWeatherService->importForCity($cityName);
 
                 $output->writeln(\sprintf(
                     'Imported measurement for %s: %s at %s',
-                    (string) $city,
-                    (string) $temperature,
-                    (string) $measurementTime
+                    (string) $measurement->city(),
+                    (string) $measurement->temperature(),
+                    (string) $measurement->measurementTime()
                 ));
             } catch (\Throwable $e) {
                 $output->writeln(\sprintf(

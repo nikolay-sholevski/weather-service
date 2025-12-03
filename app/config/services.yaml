@@ -12,6 +12,11 @@ services:
         autoconfigure: true
         public: false
 
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/Kernel.php'
+
     # Make sure all Infra controllers are registered as services
     App\Infrastructure\Symfony\Controllers\:
         resource: '../src/Infrastructure/Symfony/Controllers/'
