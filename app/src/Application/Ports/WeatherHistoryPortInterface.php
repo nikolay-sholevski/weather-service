@@ -23,5 +23,7 @@ interface WeatherHistoryPortInterface
      * @return WeatherMeasurement[] List of measurements ordered by time ascending.
      */
     public function findMeasurementsForLastNDays(City $city, int $days): array;
+
+    public function saveMeasurement(WeatherMeasurement $measurement): void;
 }
 

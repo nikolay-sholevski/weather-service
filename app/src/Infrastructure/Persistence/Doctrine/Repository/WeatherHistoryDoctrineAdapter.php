@@ -16,8 +16,8 @@ use Doctrine\DBAL\Connection;
 /**
  * Doctrine DBAL-based implementation of WeatherHistoryPortInterface.
  *
- * Uses raw SQL/QueryBuilder to fetch rows from the "weather_measurements" table
- * and hydrates them into domain WeatherMeasurement objects.
+ * Uses raw SQL/QueryBuilder to interact with the "weather_measurements" table
+ * and hydrates domain WeatherMeasurement objects.
  */
 final class WeatherHistoryDoctrineAdapter implements WeatherHistoryPortInterface
 {
@@ -26,6 +26,9 @@ final class WeatherHistoryDoctrineAdapter implements WeatherHistoryPortInterface
     ) {
     }
 
+    /**
+     * @return WeatherMeasurement[]
+     */
     public function findMeasurementsForLastNDays(City $city, int $days): array
     {
         $now = new DateTimeImmutable('now');
@@ -56,6 +59,21 @@ SQL;
         }
 
         return $measurements;
+    }
+
+    public function saveMeasurement(WeatherMeasurement $measurement): void
+    {
+        // using your existing API: city(), temperature(), measurementTime()
+        $city = $measurement->city();                    // City VO
+        $temperature = $measurement->temperature();      // Temperature VO
+        $time = $measurement->measurementTime();        // MeasurementTime VO
+
+        // adjust value()/valueObject API if needed
+        $this->connection->insert('weather_measurements', [
+            'city_name'           => \mb_strtolower($city->value()),
+            'temperature_celsius' => $temperature->value(),              // or ->toFloat()
+            'measured_at'         => $time->value()->format('Y-m-d H:i:s'),
+        ]);
     }
 }
 

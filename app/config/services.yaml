@@ -17,6 +17,17 @@ services:
         resource: '../src/Infrastructure/Symfony/Controllers/'
         tags: ['controller.service_arguments']
 
+    # Console command for fetching weather 
+    App\Infrastructure\Symfony\Command\:
+        resource: '../src/Infrastructure/Symfony/Command/*'
+        tags: ['console.command']
+    
+    # Doctrine Adapter
+    App\Infrastructure\Persistence\Doctrine\Repository\WeatherHistoryDoctrineAdapter:
+        arguments:
+            $connection: '@doctrine.dbal.default_connection'
+        tags: []
+
     # Redis client
     redis:
         class: Redis

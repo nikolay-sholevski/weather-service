@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Infrastructure\Symfony\Command;
 
 use App\Application\Ports\CurrentWeatherProviderInterface;
+use App\Application\Ports\WeatherHistoryPortInterface;
 use App\Domain\Entities\WeatherMeasurement;
 use App\Domain\ValueObjects\City;
 use App\Domain\ValueObjects\MeasurementTime;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -17,13 +17,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     name: 'app:weather:import-measurement',
-    description: 'Imports a single current weather measurement for a given city into the database.'
+    description: 'Imports current weather measurements for one or more cities',
 )]
-final class ImportWeatherMeasurementsCommand extends Command
+#[AsPeriodicTask('5 minutes', schedule: 'default')]
+class ImportWeatherMeasurementsCommand extends Command
 {
     public function __construct(
         private readonly CurrentWeatherProviderInterface $currentWeatherProvider,
-        private readonly EntityManagerInterface $entityManager
+        private readonly WeatherHistoryPortInterface $weatherHistoryPort,
     ) {
         parent::__construct();
     }
@@ -31,33 +32,56 @@ final class ImportWeatherMeasurementsCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('city', InputArgument::REQUIRED, 'City name');
+            ->addArgument(
+                'city',
+                InputArgument::IS_ARRAY | InputArgument::REQUIRED,
+                'City or list of cities (space-separated): Sofia Varna Burgas'
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $cityName = (string) $input->getArgument('city');
-        $city = new City($cityName);
+        /** @var string[] $cityNames */
+        $cityNames = $input->getArgument('city');
 
-        $temperature = $this->currentWeatherProvider->getCurrentTemperature($city);
-        $measurementTime = new MeasurementTime(new \DateTimeImmutable('now'));
+        if (!\is_array($cityNames) || $cityNames === []) {
+            $output->writeln('<error>No cities provided</error>');
 
-        $measurement = new WeatherMeasurement(
-            null, // id handled by DB
-            $city,
-            $temperature,
-            $measurementTime
-        );
+            return Command::INVALID;
+        }
 
-        $this->entityManager->persist($measurement);
-        $this->entityManager->flush();
+        foreach ($cityNames as $cityName) {
+            try {
+                $city = new City($cityName);
 
-        $output->writeln(\sprintf(
-            'Imported measurement for %s: %s at %s',
-            (string) $city,
-            (string) $temperature,
-            (string) $measurementTime
-        ));
+                $temperature = $this->currentWeatherProvider->getCurrentTemperature($city);
+
+                $measurementTime = new MeasurementTime(new \DateTimeImmutable('now'));
+
+                $measurement = new WeatherMeasurement(
+                    null,                // id, DB can generate or you ignore it
+                    $city,
+                    $temperature,
+                    $measurementTime
+                );
+
+                // 🔥 This replaces EntityManager->persist/flush
+                $this->weatherHistoryPort->saveMeasurement($measurement);
+
+                $output->writeln(\sprintf(
+                    'Imported measurement for %s: %s at %s',
+                    (string) $city,
+                    (string) $temperature,
+                    (string) $measurementTime
+                ));
+            } catch (\Throwable $e) {
+                $output->writeln(\sprintf(
+                    '<error>Error importing %s: %s</error>',
+                    $cityName,
+                    $e->getMessage()
+                ));
+            }
+        }
 
         return Command::SUCCESS;
     }
