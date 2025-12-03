@@ -51,8 +51,8 @@ final class OpenWeatherCurrentWeatherProvider implements CurrentWeatherProviderI
 
             $tempValue = $data['main']['temp'] ?? null;
 
-            if (!\is_float($tempValue) && !\is_int($tempValue)) {
-                throw new \RuntimeException('Temperature not found or invalid in provider response.');
+            if ($tempValue === null) {
+                throw new \RuntimeException('Temperature not found in provider response.');
             }
 
             return new Temperature((float) $tempValue);

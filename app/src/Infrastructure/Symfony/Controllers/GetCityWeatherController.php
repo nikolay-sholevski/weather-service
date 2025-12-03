@@ -26,7 +26,7 @@ final class GetCityWeatherController
     public function __invoke(Request $request): JsonResponse
     {
         $dto = new GetCityWeatherRequest();
-        $dto->city = $request->query->get('city');
+        $dto->city = (string) $request->query->get('city');
 
         $violations = $this->validator->validate($dto);
 

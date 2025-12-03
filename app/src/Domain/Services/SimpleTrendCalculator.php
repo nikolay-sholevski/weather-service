@@ -27,6 +27,9 @@ final class SimpleTrendCalculator implements TrendCalculatorInterface
         }
     }
 
+    /**
+     * @param WeatherMeasurement[] $historicalMeasurements
+     */
     public function analyze(
         Temperature $currentTemperature,
         array $historicalMeasurements
@@ -41,18 +44,8 @@ final class SimpleTrendCalculator implements TrendCalculatorInterface
         $count = 0;
 
         foreach ($historicalMeasurements as $measurement) {
-            if (!$measurement instanceof WeatherMeasurement) {
-                throw new \InvalidArgumentException('Expected array of WeatherMeasurement instances.');
-            }
-
             $sum += $measurement->temperature()->value();
             $count++;
-        }
-
-        if ($count === 0) {
-            $trend = new Trend(Trend::DIRECTION_STABLE, 0.0);
-
-            return new TrendAnalysis($trend, null);
         }
 
         $average = new Temperature($sum / $count);

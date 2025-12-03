@@ -7,27 +7,23 @@ namespace App\Infrastructure\Persistence\Doctrine\Repository;
 use App\Application\Ports\WeatherHistoryPortInterface;
 use App\Domain\Entities\WeatherMeasurement;
 use App\Domain\ValueObjects\City;
+use App\Domain\ValueObjects\MeasurementTime;
+use App\Domain\ValueObjects\Temperature;
 use DateInterval;
 use DateTimeImmutable;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\EntityRepository;
+use Doctrine\DBAL\Connection;
 
 /**
- * Doctrine-based implementation of WeatherHistoryPortInterface.
+ * Doctrine DBAL-based implementation of WeatherHistoryPortInterface.
  *
- * This is an outbound adapter: it satisfies the application's need
- * for historical measurements using a relational database.
+ * Uses raw SQL/QueryBuilder to fetch rows from the "weather_measurements" table
+ * and hydrates them into domain WeatherMeasurement objects.
  */
 final class WeatherHistoryDoctrineAdapter implements WeatherHistoryPortInterface
 {
-    private EntityRepository $repository;
-
     public function __construct(
-        private readonly EntityManagerInterface $entityManager
+        private readonly Connection $connection
     ) {
-        /** @var EntityRepository $repo */
-        $repo = $entityManager->getRepository(WeatherMeasurement::class);
-        $this->repository = $repo;
     }
 
     public function findMeasurementsForLastNDays(City $city, int $days): array
@@ -35,17 +31,31 @@ final class WeatherHistoryDoctrineAdapter implements WeatherHistoryPortInterface
         $now = new DateTimeImmutable('now');
         $from = $now->sub(new DateInterval(\sprintf('P%dD', $days)));
 
-        // Assuming WeatherMeasurement is a Doctrine entity,
-        // with fields: cityName (string), measurementTime (DateTimeImmutable)
-        // and temperature (float) mapped appropriately.
-        return $this->repository->createQueryBuilder('m')
-            ->andWhere('LOWER(m.cityName) = :city')
-            ->andWhere('m.measurementTime >= :from')
-            ->setParameter('city', \mb_strtolower($city->value()))
-            ->setParameter('from', $from)
-            ->orderBy('m.measurementTime', 'ASC')
-            ->getQuery()
-            ->getResult();
+        $sql = <<<'SQL'
+SELECT id, city_name, temperature_celsius, measured_at
+FROM weather_measurements
+WHERE LOWER(city_name) = :city
+  AND measured_at >= :from
+ORDER BY measured_at ASC
+SQL;
+
+        $rows = $this->connection->fetchAllAssociative($sql, [
+            'city' => \mb_strtolower($city->value()),
+            'from' => $from->format('Y-m-d H:i:s'),
+        ]);
+
+        $measurements = [];
+
+        foreach ($rows as $row) {
+            $measurements[] = new WeatherMeasurement(
+                isset($row['id']) ? (int) $row['id'] : null,
+                new City($row['city_name']),
+                new Temperature((float) $row['temperature_celsius']),
+                MeasurementTime::fromString($row['measured_at'])
+            );
+        }
+
+        return $measurements;
     }
 }
 

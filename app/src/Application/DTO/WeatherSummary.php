@@ -1,37 +1,68 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Application\DTO;
 
-use App\Domain\Entities\WeatherMeasurement;
-use App\Domain\ValueObjects\Trend;
+use App\Domain\ValueObjects\WeatherSummary as DomainWeatherSummary;
 
-final class WeatherSummary
+/**
+ * Simple DTO representation of a WeatherSummary for serialization / API responses.
+ */
+final class WeatherSummaryDto
 {
     public function __construct(
-        public readonly string $city,
-        public readonly float $temperature,
-        public readonly string $trendSign,   // "up" | "down" | "stable"
-        public readonly float $trendValue,   // magnitude, e.g. 1.5°C
-        public readonly \DateTimeImmutable $measuredAt,
+        public string $city,
+        public float $current,
+        public ?float $average,
+        public string $trendDirection,
+        public float $trendDelta,
+        public string $trendLabel,
     ) {
     }
 
-    /**
-     * Factory that translates domain objects into a DTO
-     * suitable for controllers / views / API responses.
-     */
-    public static function fromDomain(
-        WeatherMeasurement $measurement,
-        Trend $trend
-    ): self {
+    public static function fromDomain(DomainWeatherSummary $summary): self
+    {
+        $city = (string) $summary->city();
+        $current = $summary->currentTemperature()->value();
+        $average = $summary->hasAverage()
+            ? $summary->averageTemperature()?->value()
+            : null;
+
+        $trend = $summary->trend();
+
         return new self(
-            city: (string) $measurement->city(),
-            temperature: $measurement->temperature()->value,
-            trendSign: $trend->sign,
-            trendValue: $trend->magnitude,
-            measuredAt: $measurement->measuredAt(),
+            $city,
+            $current,
+            $average,
+            $trend->direction(),
+            $trend->deltaInCelsius(),
+            $trend->label(),
         );
+    }
+
+    /**
+     * To array for JSON responses etc.
+     *
+     * @return array{
+     *   city:string,
+     *   current:float,
+     *   average:float|null,
+     *   trend:array{direction:string,delta:float,label:string}
+     * }
+     */
+    public function toArray(): array
+    {
+        return [
+            'city'    => $this->city,
+            'current' => $this->current,
+            'average' => $this->average,
+            'trend'   => [
+                'direction' => $this->trendDirection,
+                'delta'     => $this->trendDelta,
+                'label'     => $this->trendLabel,
+            ],
+        ];
     }
 }
 

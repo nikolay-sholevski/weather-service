@@ -1,5 +1,5 @@
-controllers:
+weather_controllers:
     resource:
-        path: ../src/Controller/
-        namespace: App\Controller
+        path: ../src/Infrastructure/Symfony/Controllers/
+        namespace: App\Infrastructure\Symfony\Controllers
     type: attribute

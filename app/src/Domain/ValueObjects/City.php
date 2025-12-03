@@ -9,14 +9,14 @@ namespace App\Domain\ValueObjects;
  *
  * Invariants:
  * - Name is trimmed.
- * - Name is stored in a consistent canonical form (e.g. lowercased),
- *   while preserving original name for display if needed.
+ * - Name is stored in a consistent canonical form.
  */
 final class City
 {
-    public function __construct(
-        private readonly string $name
-    ) {
+    private string $name;
+
+    public function __construct(string $name)
+    {
         $trimmed = \trim($name);
 
         if ($trimmed === '') {
