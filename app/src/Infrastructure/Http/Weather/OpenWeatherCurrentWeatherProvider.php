@@ -62,9 +62,6 @@ final class OpenWeatherCurrentWeatherProvider implements CurrentWeatherProviderI
                 'city'      => $city->value(),
             ]);
 
-            // Depending on assignment expectations, you might:
-            // - rethrow a domain-specific exception
-            // - return a sentinel value
             throw $e;
         }
     }
