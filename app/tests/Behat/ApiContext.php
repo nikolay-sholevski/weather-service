@@ -18,7 +18,6 @@ final class ApiContext implements Context
 
     public function __construct(KernelInterface $kernel)
     {
-        // BrowserKit client върху нашия Kernel (test env)
         $this->client = new KernelBrowser($kernel);
     }
 
@@ -31,6 +30,15 @@ final class ApiContext implements Context
             'city' => $city,
         ]);
 
+        $this->response = $this->client->getResponse();
+    }
+
+    /**
+     * @When I request the city weather with no parameters
+     */
+    public function iRequestTheCityWeatherWithNoParameters(): void
+    {
+        $this->client->request('GET', '/api/weather');
         $this->response = $this->client->getResponse();
     }
 
@@ -50,7 +58,8 @@ final class ApiContext implements Context
     {
         Assert::assertNotNull($this->response, 'No response was received yet.');
 
-        $actual = json_decode($this->response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $content  = (string) $this->response->getContent();
+        $actual   = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
         $expected = json_decode($expectedJson->getRaw(), true, 512, JSON_THROW_ON_ERROR);
 
         Assert::assertIsArray($actual, 'Actual response is not a JSON object');
@@ -62,7 +71,7 @@ final class ApiContext implements Context
                 $key
             ));
 
-            if (is_array($value)) {
+            if (\is_array($value)) {
                 Assert::assertIsArray($actual[$key]);
                 Assert::assertEquals($value, $actual[$key]);
             } else {
@@ -70,6 +79,25 @@ final class ApiContext implements Context
             }
         }
     }
+
+    /**
+     * @Then the JSON response should contain exactly:
+     */
+    public function theJsonResponseShouldContainExactly(PyStringNode $expectedJson): void
+    {
+        Assert::assertNotNull($this->response, 'No response received');
+
+        $content  = (string) $this->response->getContent();
+        $actual   = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+        $expected = json_decode($expectedJson->getRaw(), true, 512, JSON_THROW_ON_ERROR);
+
+        Assert::assertEquals(
+            $expected,
+            $actual,
+            'JSON response does not match expected structure'
+        );
+    }
+
     /**
      * Helper: get value by dot-notated path, e.g. "trend.delta"
      *
@@ -78,64 +106,72 @@ final class ApiContext implements Context
     private function getValueByPath(array $data, string $path): mixed
     {
         $parts = explode('.', $path);
-    
+
         foreach ($parts as $part) {
-            Assert::assertIsArray($data, 'Current JSON node is not an array while looking for ' . $path);
-            Assert::assertArrayHasKey($part, $data, sprintf('Key "%s" not found in JSON path "%s"', $part, $path));
-        
+            Assert::assertIsArray(
+                $data,
+                'Current JSON node is not an array while looking for ' . $path
+            );
+            Assert::assertArrayHasKey(
+                $part,
+                $data,
+                sprintf('Key "%s" not found in JSON path "%s"', $part, $path)
+            );
+
+            /** @var mixed $data */
             $data = $data[$part];
         }
-    
+
         return $data;
     }
-    
+
     /**
      * @Then the JSON response should have field :path
      */
     public function theJsonResponseShouldHaveField(string $path): void
     {
         Assert::assertNotNull($this->response, 'No response received');
-    
-        $actual = json_decode($this->response->getContent(), true, 512, JSON_THROW_ON_ERROR);
-        $this->getValueByPath($actual, $path); // ако го няма, ще гръмне в assert-ите
+
+        $content = (string) $this->response->getContent();
+        $actual  = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
+        $this->getValueByPath($actual, $path);
     }
-    
+
     /**
      * @Then the JSON response should have numeric field :path
      */
     public function theJsonResponseShouldHaveNumericField(string $path): void
     {
         Assert::assertNotNull($this->response, 'No response received');
-    
-        $actual = json_decode($this->response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        $content = (string) $this->response->getContent();
+        $actual  = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
         $value = $this->getValueByPath($actual, $path);
-    
+
         Assert::assertTrue(
-            is_int($value) || is_float($value),
+            \is_int($value) || \is_float($value),
             sprintf('Field "%s" is not numeric (got: %s)', $path, gettype($value))
         );
     }
-    
+
     /**
      * @Then the JSON response should have string field :path
      */
     public function theJsonResponseShouldHaveStringField(string $path): void
     {
         Assert::assertNotNull($this->response, 'No response received');
-    
-        $actual = json_decode($this->response->getContent(), true, 512, JSON_THROW_ON_ERROR);
-        $value = $this->getValueByPath($actual, $path);
-    
-        Assert::assertIsString($value, sprintf('Field "%s" is not a string (got: %s)', $path, gettype($value)));
-    }
 
-    /**
-     * @When I request the city weather with no parameters
-     */
-    public function iRequestTheCityWeatherWithNoParameters(): void
-    {
-        $this->client->request('GET', '/api/weather'); // без query параметри
-        $this->response = $this->client->getResponse();
+        $content = (string) $this->response->getContent();
+        $actual  = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
+        $value = $this->getValueByPath($actual, $path);
+
+        Assert::assertIsString(
+            $value,
+            sprintf('Field "%s" is not a string (got: %s)', $path, gettype($value))
+        );
     }
 }
 
