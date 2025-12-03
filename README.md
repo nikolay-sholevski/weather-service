@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is a small **Symfony 7** microservice that exposes a single HTTP endpoint:
+This project is a small **Symfony 7** microservice that exposes a HTTP endpoint:
 
 - `GET /api/weather?city=NAME`
 
@@ -12,7 +12,7 @@ It returns a **weather summary** for a city, including:
 - historical average temperature
 - a trend (getting hotter/colder and by how much)
 
-The code is organised using **Domain‑Driven Design (DDD)** and **Hexagonal Architecture** with clear separation between:
+The code is organised using **Domain-Driven Design (DDD)** and **Hexagonal Architecture** with clear separation between:
 
 - **Domain** – pure business logic (entities, value objects, domain services)
 - **Application** – use cases, ports, DTOs
@@ -140,155 +140,135 @@ Other important paths:
 
 ### Inbound vs Outbound Ports (Hexagonal)
 
-- **Inbound (driving) side** – how the outside world calls us:
+- **Inbound (driving) side** – how the outside world calls the application:
   - HTTP request → `GetCityWeatherController`
   - CLI command → `ImportWeatherMeasurementsCommand`
 
-- **Outbound (driven) side** – how we depend on external systems:
+- **Outbound (driven) side** – how the application depends on external systems:
   - `CurrentWeatherProviderInterface` → implemented by:
     - `OpenWeatherCurrentWeatherProvider` (real HTTP client)
     - `FakeCurrentWeatherProvider` (for dev/testing)
   - `WeatherHistoryPortInterface` → implemented by:
     - `WeatherHistoryDoctrineAdapter` (PostgreSQL via Doctrine)
 
-### C4 Model (high-level)
+---
 
-#### System Context (C1)
+## Running the project
 
-- **System:** Weather Service (this project)
-- **External Systems:**
-  - OpenWeather API – provides live temperature data per city.
-  - PostgreSQL – stores historical weather measurements.
-  - Redis (optional) – caching for weather data.
-- **Users/Clients:** Any HTTP client (front-end app, Postman, tests) calling `/api/weather`.
+You can run the project either **natively** (PHP + local Postgres) or using **Docker Compose**.
 
-#### Container / Component (C2/C3) – Textual
+### 1. Using Docker Compose (recommended for this setup)
 
-- **Container:** Symfony 7 Application
-  - **Components:**
-    - Domain model (`WeatherMeasurement`, `WeatherSummary`, `Trend`, etc.)
-    - Application services (`GetCityWeatherService`, `ImportCityWeatherService`)
-    - HTTP API (controller for `/api/weather`)
-    - Console command (`app:weather:import-measurement`)
-    - Ports & adapters for:
-      - HTTP weather provider (OpenWeather)
-      - Persistence (Doctrine/PostgreSQL)
+If the repository contains a `docker-compose.yml` with the PHP/Symfony app, PostgreSQL and Redis services (as in this task), you can start everything with:
 
-#### Optional: C4-style diagram (Mermaid)
-
-```mermaid
-flowchart LR
-  Client[API Client
-(Postman, Frontend, Behat)] -->|HTTP /api/weather| Controller[GetCityWeatherController]
-  Controller -->|calls| GetCityWeatherService
-
-  subgraph Application Layer
-    GetCityWeatherService
-    ImportCityWeatherService
-  end
-
-  GetCityWeatherService -->|uses| TrendCalculator[SimpleTrendCalculator]
-  GetCityWeatherService -->|port| CurrentWeatherPort[CurrentWeatherProviderInterface]
-  GetCityWeatherService -->|port| HistoryPort[WeatherHistoryPortInterface]
-
-  subgraph Infrastructure Layer
-    OpenWeatherAdapter[OpenWeatherCurrentWeatherProvider]
-    FakeWeatherAdapter[FakeCurrentWeatherProvider]
-    DoctrineAdapter[WeatherHistoryDoctrineAdapter]
-    ImportCommand[ImportWeatherMeasurementsCommand]
-  end
-
-  CurrentWeatherPort --> OpenWeatherAdapter
-  HistoryPort --> DoctrineAdapter
-
-  OpenWeatherAdapter -->|HTTP| OpenWeather[OpenWeather API]
-  DoctrineAdapter -->|SQL| Postgres[(PostgreSQL)]
+```bash
+docker-compose up -d
 ```
+
+This will:
+
+- start the application container
+- start the PostgreSQL database (and Redis, if configured)
+- expose the Symfony app on **http://localhost:8080**
+
+Once it is up, you can test the API via:
+
+```bash
+curl "http://localhost:8080/api/weather?city=Sofia"
+```
+
+> If your Docker service names differ, adjust the `docker-compose` commands accordingly (e.g. `docker compose` instead of `docker-compose`).
+
+#### Running console commands inside Docker
+
+Most Symfony commands should be executed inside the PHP/app container.  
+For example, if your PHP service is called `app`:
+
+```bash
+docker-compose exec app php bin/console list
+```
+
+Adapt the service name (`app`, `php`, `php-fpm`, etc.) to match your `docker-compose.yml`.
+
+### 2. Running locally (without Docker)
+
+If you prefer to run locally:
+
+1. Ensure you have PHP, Composer and PostgreSQL installed.
+2. Configure `DATABASE_URL` in `.env` and `.env.local`.
+3. Install dependencies:
+
+   ```bash
+   composer install
+   ```
+
+4. Create DB and run migrations (see below).
+5. Run a web server pointing to your front controller or use Symfony CLI:
+
+   ```bash
+   symfony server:start
+   ```
+
+Then the app will be available on a port such as `https://127.0.0.1:8000` depending on how the server is configured.
 
 ---
 
-## Setup & Installation
+## Database & Migrations
 
-### Requirements
+### Dev / Normal usage
 
-- PHP >= 8.2
-- Composer
-- PostgreSQL 16 (or compatible)
-- (Optional) Redis (for caching)
-- Git / Docker (optional, depending on environment)
+1. **Create the database**:
 
-### 1. Install PHP dependencies
+   ```bash
+   php bin/console doctrine:database:create
+   ```
 
-From the project root:
+2. **Run migrations**:
 
-```bash
-composer install
-```
+   ```bash
+   php bin/console doctrine:migrations:migrate
+   ```
 
-### 2. Configure environment variables
-
-Copy `.env` to `.env.local` if needed, and configure your own settings.
-
-Important variables:
-
-```env
-APP_ENV=dev
-APP_DEBUG=1
-
-DATABASE_URL="postgresql://symfony:symfony@weather-db:5432/weather?serverVersion=16&charset=utf8"
-
-OPENWEATHER_API_KEY=your_own_api_key_here
-OPENWEATHER_BASE_URL="https://api.openweathermap.org/data/2.5"
-
-REDIS_HOST=redis
-REDIS_PORT=6379
-WEATHER_CACHE_TTL_SECONDS=300
-```
-
-For tests, `.env.test` overrides are used (already present in the project).
-
-### 3. Database setup (dev)
-
-Create the database:
+If you are using Docker, run the same commands **inside the PHP container**, for example:
 
 ```bash
-php bin/console doctrine:database:create
+docker-compose exec app php bin/console doctrine:database:create
+docker-compose exec app php bin/console doctrine:migrations:migrate
 ```
 
-Run migrations:
-
-```bash
-php bin/console doctrine:migrations:migrate
-```
-
-Existing migrations:
+Existing migrations (examples):
 
 - `Version20250201CreateWeatherMeasurements`  
   – creates the `weather_measurements` table.
 - `Version20250201SeedInitialWeatherData`  
-  – seeds some initial measurements (e.g. for Sofia) for trend calculations.
+  – seeds initial measurements for some cities so that trend calculations have history.
 
-You can re-run them on a fresh DB to get the correct schema and sample data.
+### Test environment (Behat / PHPUnit)
 
----
+The test environment uses its own database (e.g. with `_test` suffix), configured via `.env.test` and `config/packages/test/doctrine.yaml`.
 
-## Running the Application
+To initialise the **test database**:
 
-This project is structured as a Symfony microservice and is primarily exercised via:
+1. **Create the test database**:
 
-- HTTP requests (e.g. through functional tests like Behat)
-- console commands
+   ```bash
+   php bin/console doctrine:database:create --env=test
+   ```
 
-Depending on your environment, you can run it:
+2. **Run migrations in the test environment**:
 
-- Under a web server pointing to your front controller (if you add `public/index.php`), or
-- Using Symfony’s local server (if installed globally):
+   ```bash
+   php bin/console doctrine:migrations:migrate --env=test -n
+   ```
+
+With Docker:
 
 ```bash
-symfony server:start
+docker-compose exec app php bin/console doctrine:database:create --env=test
+docker-compose exec app php bin/console doctrine:migrations:migrate --env=test -n
 ```
 
-For the purpose of this task, the main interaction is through tests and the console.
+After this, Behat and PHPUnit will run against the migrated test DB.
 
 ---
 
@@ -333,7 +313,7 @@ Fields:
 - `trend`:
   - `direction` – `"hotter"`, `"colder"` or `"same"`
   - `delta` – difference in °C between current and average
-  - `label` – human‑readable description
+  - `label` – human-readable description
 
 Validation:
 
@@ -353,6 +333,12 @@ You can pass multiple cities:
 
 ```bash
 php bin/console app:weather:import-measurement Sofia Varna Burgas
+```
+
+With Docker:
+
+```bash
+docker-compose exec app php bin/console app:weather:import-measurement Sofia Varna Burgas
 ```
 
 Internally:
@@ -376,6 +362,12 @@ Run all Behat tests:
 
 ```bash
 vendor/bin/behat
+```
+
+With Docker:
+
+```bash
+docker-compose exec app vendor/bin/behat
 ```
 
 Current scenarios:
@@ -405,22 +397,6 @@ Current scenarios:
 
 These tests use the Symfony kernel in `test` environment against the `weather_test` database (configured via `.env.test`).
 
-### Database for tests
-
-The test environment uses a separate database (e.g. `weather_test`), usually configured through:
-
-- `.env.test` with `DATABASE_URL` pointing to test DB.
-- `config/packages/test/doctrine.yaml` may append `_test` suffix.
-
-To set up test DB:
-
-```bash
-php bin/console doctrine:database:create --env=test
-php bin/console doctrine:migrations:migrate --env=test -n
-```
-
-Then run Behat and any other tests.
-
 ### PHPUnit
 
 PHPUnit is available via:
@@ -436,16 +412,15 @@ vendor/bin/phpunit
 php bin/phpunit
 ```
 
+With Docker:
+
+```bash
+docker-compose exec app vendor/bin/phpunit
+# or
+docker-compose exec app php bin/phpunit
+```
+
 At the moment, the focus is on Behat for API behaviour; PHPUnit can be used to cover pure domain logic (e.g. `SimpleTrendCalculator`, `WeatherSummary`, `Trend` value object, etc.).
-
----
-
-## Notes & Possible Extensions
-
-- Add more unit tests in `tests/` for Domain services and Value Objects.
-- Extend `GetCityWeatherService` to support configurable history window (e.g. last N days).
-- Add caching via Redis for current weather responses.
-- Add additional endpoints if needed (e.g. `/api/weather/history`).
 
 ---
 
@@ -456,7 +431,7 @@ This project demonstrates:
 - A clean **DDD + Hexagonal** architecture in Symfony 7
 - Separation between Domain, Application (use cases, ports), and Infrastructure (adapters)
 - Integration with external HTTP API (OpenWeather) and PostgreSQL via Doctrine
-- Behaviour‑driven API tests with Behat and the FriendsOfBehat SymfonyExtension
+- Behaviour-driven API tests with Behat and the FriendsOfBehat SymfonyExtension
 
 It is ready to be used as a template or reference for future microservices that require clear layering, testability and explicit boundaries between domain logic and infrastructure.
 
