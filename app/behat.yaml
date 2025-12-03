@@ -1,0 +1,17 @@
+default:
+  suites:
+    default:
+      paths:
+        features: features
+      contexts:
+        - App\Tests\Behat\ApiContext
+
+  extensions:
+    FriendsOfBehat\SymfonyExtension:
+      bootstrap: 'config/bootstrap.php'
+      kernel:
+        class: App\Kernel
+        path: src/Kernel.php
+        environment: test
+        debug: true
+
