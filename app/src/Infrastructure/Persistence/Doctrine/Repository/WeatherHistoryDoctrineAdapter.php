@@ -63,12 +63,10 @@ SQL;
 
     public function saveMeasurement(WeatherMeasurement $measurement): void
     {
-        // using your existing API: city(), temperature(), measurementTime()
         $city = $measurement->city();                    // City VO
         $temperature = $measurement->temperature();      // Temperature VO
         $time = $measurement->measurementTime();        // MeasurementTime VO
-
-        // adjust value()/valueObject API if needed
+    
         $this->connection->insert('weather_measurements', [
             'city_name'           => \mb_strtolower($city->value()),
             'temperature_celsius' => $temperature->value(),              // or ->toFloat()
